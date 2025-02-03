@@ -7,6 +7,9 @@ from rich.progress import Progress
 
 console = Console()
 
+# Path to the blacklist file
+BLACKLIST_FILE = "blacklist.txt"
+
 # Hardcoded blacklist of packages to ignore
 BLACKLISTED_PACKAGES = [
     "frida-python", "zeronet", "bat", "make-guile", "libblosc", "libjpeg-turbo-static",
@@ -58,6 +61,28 @@ BLACKLISTED_PACKAGES = [
     "xfce4-calculator-plugin-static", "zstd-static"
 ]
 
+def load_blacklist():
+    """Load the blacklist from a file."""
+    if os.path.exists(BLACKLIST_FILE):
+        with open(BLACKLIST_FILE, "r") as file:
+            return [line.strip() for line in file.readlines()]
+    return []
+
+def save_blacklist(blacklist):
+    """Save the blacklist to a file."""
+    with open(BLACKLIST_FILE, "w") as file:
+        for package in blacklist:
+            file.write(f"{package}\n")
+
+def prompt_for_blacklist():
+    """Prompt the user to add packages to the blacklist."""
+    console.print("[blue]Enter packages to add to the blacklist (comma-separated):[/blue]")
+    user_input = input().strip()
+    if user_input:
+        new_packages = [pkg.strip() for pkg in user_input.split(",")]
+        return new_packages
+    return []
+
 def get_all_packages():
     """Retrieve the list of all available Termux packages."""
     result = subprocess.run(["pkg", "list-all"], capture_output=True, text=True)
@@ -105,20 +130,16 @@ def fix_broken_packages():
     console.print("[yellow]Fixing broken packages...[/yellow]")
     subprocess.run(["apt", "--fix-broken", "install", "-y"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-def update_blacklist(new_packages):
-    """Update the blacklist with new packages."""
-    global BLACKLISTED_PACKAGES
-    BLACKLISTED_PACKAGES.extend(new_packages)
-    BLACKLISTED_PACKAGES = sorted(set(BLACKLISTED_PACKAGES))
-
 def main():
-    # Prompt user to add packages to the blacklist
-    console.print("[blue]Do you want to add any packages to the blacklist? (comma-separated list or leave blank to skip)[/blue]")
-    user_input = input("Enter packages to blacklist: ").strip()
-    if user_input:
-        new_blacklist = [pkg.strip() for pkg in user_input.split(",") if pkg.strip()]
-        update_blacklist(new_blacklist)
-        console.print(f"[green]Updated blacklist with {len(new_blacklist)} packages.[/green]")
+    # Load the existing blacklist
+    global BLACKLISTED_PACKAGES
+    BLACKLISTED_PACKAGES.extend(load_blacklist())
+
+    # Prompt the user to add packages to the blacklist
+    new_blacklist_entries = prompt_for_blacklist()
+    if new_blacklist_entries:
+        BLACKLISTED_PACKAGES.extend(new_blacklist_entries)
+        save_blacklist(BLACKLISTED_PACKAGES)
 
     # Logs and summary files
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
