@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-#!/usr/bin/env python3
-
 import os
 import subprocess
 from datetime import datetime
@@ -88,7 +86,16 @@ def install_package(package, log_success, log_failure):
         else:
             error_message = result.stderr.strip()
             log_failure.write(f"{package}: Failed to install. Error: {error_message}\n")
-            return False
+            # Attempt to fix broken packages and retry installation
+            fix_broken_packages()
+            result = subprocess.run(["pkg", "install", "-y", package], capture_output=True, text=True)
+            if result.returncode == 0:
+                log_success.write(f"{package}: Successfully installed after retry.\n")
+                return True
+            else:
+                error_message = result.stderr.strip()
+                log_failure.write(f"{package}: Failed to install after retry. Error: {error_message}\n")
+                return False
     except Exception as e:
         log_failure.write(f"{package}: Exception occurred: {str(e)}\n")
         return False
@@ -98,7 +105,21 @@ def fix_broken_packages():
     console.print("[yellow]Fixing broken packages...[/yellow]")
     subprocess.run(["apt", "--fix-broken", "install", "-y"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
+def update_blacklist(new_packages):
+    """Update the blacklist with new packages."""
+    global BLACKLISTED_PACKAGES
+    BLACKLISTED_PACKAGES.extend(new_packages)
+    BLACKLISTED_PACKAGES = sorted(set(BLACKLISTED_PACKAGES))
+
 def main():
+    # Prompt user to add packages to the blacklist
+    console.print("[blue]Do you want to add any packages to the blacklist? (comma-separated list or leave blank to skip)[/blue]")
+    user_input = input("Enter packages to blacklist: ").strip()
+    if user_input:
+        new_blacklist = [pkg.strip() for pkg in user_input.split(",") if pkg.strip()]
+        update_blacklist(new_blacklist)
+        console.print(f"[green]Updated blacklist with {len(new_blacklist)} packages.[/green]")
+
     # Logs and summary files
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     success_log_path = f"termux_installed_packages_{timestamp}.log"
@@ -156,5 +177,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
