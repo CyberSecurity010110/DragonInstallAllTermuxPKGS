@@ -1,62 +1,39 @@
 # DragonInstallAllTermuxPKGS
+This is an updated yet simplified and better version of my previous attempt to create a  program to install as many packages as possible for testing without breaking the termux package system.
 
-DragonInstallAllTermuxPKGS is a Python script designed to automate the installation of all available Termux packages. It includes robust error handling, a blacklist of packages to ignore, and the ability to fix broken packages during the installation process.
+##Features
 
-## Features
+This version sticks to pure Bash, avoiding many issues entirely my previous script had.
 
-- Fetches and installs all available Termux packages.
-- Skips packages listed in a configurable blacklist.
-- Handles installation errors and retries failed installations.
-- Fixes broken packages automatically.
-- Prompts the user to add packages to the blacklist at startup.
+Verbose Terminal Output:
+Instead of progress bars, it now prints clear messages for each package attempt, success, or failure. You’ll now get to see exactly what’s happening in real-time
 
-## Requirements
+Robust Error Handling:
+The || true construct ensures the script doesn’t exit on cleanup failures (e.g., if a package wasn’t partially installed or autoclean fails).
+Redirects error output (2>/dev/null) to keep the terminal cleaner while still showing meaningful status updates.
 
-- Termux
-- Python 3
-- Rich library for enhanced console output
+Cleanup Logic:
+If a package fails to install, it attempts to remove it (pkg remove) and clears the cache (pkg autoclean). This prevents broken packages from piling up and causing subsequent failures.
+
+Accurate Counting:
+Tracks installed_count and skipped_count explicitly, avoiding the off-by-one or misreported counts you noticed. It also calculates a success rate as a percentage.
+
+No Wildcard Conflicts:
+Unlike the original wildcard approach (pkg install *), which Termux doesn’t handle well, this iterates over the explicit package list from pkg list-all, ensuring every package is tried individually.
+
 
 ## Installation
 
-1. Clone the repository:
-    git clone https://github.com/CyberSecurity010110/DragonInstallAllTermuxPKGS.git
-    cd DragonInstallAllTermuxPKGS
+ Clone the repository:
 
-2. Install the required Python library:
-    pip install rich
+git clone https://github.com/CyberSecurity010110/DragonInstallAllTermuxPKGS
 
 ## Usage
 
-1. Run the script:
-    python3 installaltermuxpkgs.py
+Run the script:
+./installaltermuxpkgs.sh
 
-2. At startup, you will be prompted to add any packages to the blacklist. Enter the package names separated by commas.
 
-3. The script will fetch all available Termux packages and begin the installation process, skipping any packages in the blacklist.
-
-## Configuration
-
-- **Blacklist**: The blacklist is stored in a file named `blacklist.txt`. You can manually edit this file to add or remove packages from the blacklist.
-
-## Script Details
-
-### Functions
-
-- **get_all_packages**: Retrieves the list of all available Termux packages.
-- **is_package_installed**: Checks if a package is already installed.
-- **install_package**: Attempts to install a package and handles errors.
-- **fix_broken_packages**: Attempts to fix broken packages.
-- **prompt_for_blacklist**: Prompts the user to add packages to the blacklist.
-- **load_blacklist**: Loads the blacklist from a file.
-- **save_blacklist**: Saves the blacklist to a file.
-
-### Main Process
-
-1. Loads the existing blacklist from `blacklist.txt`.
-2. Prompts the user to add additional packages to the blacklist.
-3. Fetches all available Termux packages.
-4. Iterates through the package list, installing each package unless it is in the blacklist.
-5. Logs the results of the installation process.
 
 ## Contributing
 
@@ -65,4 +42,3 @@ Contributions are welcome! Please open an issue or submit a pull request for any
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
