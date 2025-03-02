@@ -31,7 +31,7 @@ git clone https://github.com/CyberSecurity010110/DragonInstallAllTermuxPKGS
 ## Usage
 
 Run the script:
-./installaltermuxpkgs.sh
+./DragonInstallAllTermuxPKGS.sh
 
 
 
